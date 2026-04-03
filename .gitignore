@@ -1,0 +1,7 @@
+# Mac 系統隱藏檔
+.DS_Store
+
+# Xcode 個人設定與狀態檔
+*.xcuserstate
+xcuserdata/
+project.xcworkspace/xcuserdata/
