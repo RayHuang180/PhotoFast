@@ -4,7 +4,7 @@
 
 |名稱|網址|
 |-|-|
-|主app|https://github.com/RayHuang180/PhotoFast-server|
+|主app|https://github.com/RayHuang180/PhotoFast|
 |電腦端伺服器|https://github.com/RayHuang180/PhotoFast-server|
 
 
