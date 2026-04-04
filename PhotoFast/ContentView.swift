@@ -4,13 +4,25 @@ import PhotosUI
 struct ContentView: View {
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImages: [UIImage] = []
-    
-    // 新增：用來追蹤是否正在上傳中
     @State private var isUploading: Bool = false
+    
+    // 💡 新增：啟動我們的伺服器雷達
+    @StateObject private var locator = ServerLocator()
     
     var body: some View {
         NavigationStack {
             VStack {
+                // 💡 新增：顯示連線狀態
+                HStack {
+                    Circle()
+                        .fill(locator.serverURL != nil ? Color.green : Color.red)
+                        .frame(width: 10, height: 10)
+                    Text(locator.serverURL != nil ? "已連接伺服器" : "尋找伺服器中...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top)
+                
                 // 圖片預覽區塊
                 if selectedImages.isEmpty {
                     Text("尚未選擇照片")
@@ -61,8 +73,8 @@ struct ContentView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
                 }
-                // 禁用條件：沒選照片、照片還沒載入完，或者「正在上傳中」時，按鈕反灰不准按
-                .disabled(selectedImages.isEmpty || selectedItems.count != selectedImages.count || isUploading)
+                // 💡 修改禁用條件：如果還沒找到伺服器，按鈕也不能按
+                .disabled(selectedImages.isEmpty || selectedItems.count != selectedImages.count || isUploading || locator.serverURL == nil)
                 .padding(.bottom)
             }
             .navigationTitle("PhotoFast")
@@ -110,8 +122,11 @@ struct ContentView: View {
     }
     
     private func uploadSelectedPhotos() async {
-        let serverURLString = "http://192.168.11.56:5000/upload"
-        guard let url = URL(string: serverURLString) else { return }
+        // 💡 修改：不再寫死 IP，直接拿雷達找到的 URL
+        guard let url = locator.serverURL else {
+            print("尚未找到伺服器")
+            return
+        }
         
         for (index, image) in selectedImages.enumerated() {
             guard let imageData = image.jpegData(compressionQuality: 0.8) else { continue }
@@ -126,7 +141,7 @@ struct ContentView: View {
             let filename = "photo_\(Int(Date().timeIntervalSince1970))_\(index).jpg"
             
             body.append("--\(boundary)\r\n")
-            body.append("Content-Disposition: form-data; name=\"photo\"; filename=\"\(filename)\"\r\n")
+            body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n")
             body.append("Content-Type: image/jpeg\r\n\r\n")
             body.append(imageData)
             body.append("\r\n")
